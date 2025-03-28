@@ -70,11 +70,16 @@ describe("DigiKoin Ecosystem Test", function () {
 
   describe("Dividend System", function () {
     it("Should distribute dividends correctly", async function () {
-      const { dividendManager, goldReserveManager, owner, alice, publicClient } = await loadFixture(deployDigiKoinFixture);
+      const { digiKoin, dividendManager, goldReserveManager, owner, alice, bob, publicClient } = await loadFixture(deployDigiKoinFixture);
 
       // Alice holds 1 kg gold
       const goldAmount = parseEther("1000");
       await goldReserveManager.write.holdGold([goldAmount], {
+        account: alice.account,
+      });
+
+      // Alice transfers DGK tokens to Bob, and voting power is automotically delegated to Bob 
+      await digiKoin.write.transfer([bob.account.address, goldAmount], {
         account: alice.account,
       });
 
@@ -88,19 +93,19 @@ describe("DigiKoin Ecosystem Test", function () {
       // Wait for 1 block for snapshot
       await hre.network.provider.send("evm_mine");
 
-      // Get Alice's ETH balance BEFORE claiming dividends
+      // Get Bob's ETH balance BEFORE claiming dividends
       const balanceBefore = await publicClient.getBalance({
-        address: alice.account.address,
+        address: bob.account.address,
       });
 
-      // Alice owns 1 kg / 10 kg of total supply (10%)
+      // Bob owns 1 kg / 10 kg of total supply (10%)
       await dividendManager.write.claimDividend({
-        account: alice.account,
+        account: bob.account,
       });
 
-      // ✅ Get Alice's ETH balance AFTER claiming dividends
+      // ✅ Get Bob's ETH balance AFTER claiming dividends
       const balanceAfter = await publicClient.getBalance({
-        address: alice.account.address,
+        address: bob.account.address,
       });
 
       // ✅ Calculate only the ETH gained

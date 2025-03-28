@@ -1,0 +1,24 @@
+{
+  "name": "digikoin",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:coverage": "hardhat coverage",
+    "deploy:sepolia": "hardhat ignition deploy ./ignition/modules/DigiKoinToken.ts --network sepolia",
+    "deploy:local": "hardhat ignition deploy ./ignition/modules/DigiKoinToken.ts --network localhost",
+    "node": "hardhat node"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
+    "hardhat": "^2.22.19"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts-upgradeable": "^5.2.0"
+  }
+}

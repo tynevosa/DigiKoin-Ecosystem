@@ -6,6 +6,7 @@ The **DigiKoin Token** (DGK) project is a Solidity-based smart contract ecosyste
 - **Governance and voting** functionalities using ERC20Votes
 - **Dividend distribution** to token holders
 - A **gold reserve manager** to handle the holding and redemption of gold-backed tokens
+- **Real-time pricing** using Chainlink price feeds for ETH/USD and XAU/USD
 - Integration with **Hardhat** for local testing and deployment
 
 ---
@@ -28,14 +29,24 @@ The **DigiKoin Token** (DGK) project is a Solidity-based smart contract ecosyste
 - Ownership and reentrancy protection.
 
 ### ✅ **GoldReserveManager.sol**
-- Manages **gold-backed holdings** and redemptions.
+- Manages **gold-backed holdings** and redemptions with real-time pricing.
 - Uses `EnumerableSet` to track DGK holders.
+- **Dynamic ETH/gold conversion** using Chainlink price feeds.
 - Key functions:
-    - `holdGold()`: Transfers DGK tokens from the contract to the sender.
-    - `redeemGold()`: Allows users to redeem their DGK tokens.
+    - `holdGold()`: Allows users to purchase gold-backed tokens with ETH at current market rates.
+    - `redeemGold()`: Allows users to redeem their DGK tokens for ETH at current market rates.
+    - `calculateEthForGold()`: Helper function that computes ETH value of gold based on current prices.
 - Emits events:
     - `GoldHeld`: When a user holds gold-backed DGK tokens.
     - `GoldRedeemed`: When a user redeems DGK tokens.
+
+### ✅ **PriceFeed.sol**
+- Integrates with **Chainlink oracles** for real-time price data.
+- Provides current ETH/USD and XAU/USD (gold) prices.
+- Includes fallback mechanism for price feed failures.
+- Functions:
+    - `getEthPrice()`: Returns the current ETH price in USD.
+    - `getXauPrice()`: Returns the current gold (XAU) price in USD.
 
 ---
 
@@ -82,7 +93,7 @@ npm run deploy:local
 ```
 
 ### ✅ **Sepolia Testnet Deployment**
-Deploy to Sepolia:
+Deploy to Sepolia (uses Chainlink price feeds for Sepolia):
 ```bash
 npm run deploy:sepolia
 ```
@@ -101,6 +112,11 @@ npm run test
 - **DigiKoinToken:** `0x...`
 - **DividendManager:** `0x...`
 - **GoldReserveManager:** `0x...`
+- **PriceFeed:** `0x...`
+
+**Chainlink Price Feeds (Sepolia):**
+- **ETH/USD:** `0x694AA1769357215DE4FAC081bf1f309aDC325306`
+- **XAU/USD:** `0xC5981F461d74c46eB4b0CF3f4Ec79f025573B0Ea`
 
 ---
 
@@ -108,13 +124,16 @@ npm run test
 - **ReentrancyGuard** is used to prevent reentrancy attacks.
 - **Ownable** modifier ensures only the contract owner can perform privileged operations.
 - Proper balance checks and require statements to avoid invalid transfers.
+- **Fallback pricing** in case Chainlink oracles are unavailable.
 
 ---
 
 ## 📚 **Technologies Used**
 - **Solidity:** v0.8.28
 - **OpenZeppelin:** ERC20, ERC20Votes, Ownable, and ReentrancyGuard
+- **Chainlink:** Price feed oracles for ETH/USD and XAU/USD data
 - **Hardhat:** Local testing and deployment
+- **Hardhat Ignition:** For structured contract deployment
 - **TypeScript:** Configuration and deployment scripts
 
 ---
@@ -124,7 +143,11 @@ npm run test
 /contracts
  ├── DigiKoinToken.sol        # Main ERC20 token contract
  ├── DividendManager.sol      # Manages dividend distribution
- └── GoldReserveManager.sol   # Manages gold reserves
+ ├── GoldReserveManager.sol   # Manages gold reserves
+ └── PriceFeed.sol            # Chainlink oracle integration for price data
+/ignition
+ └── modules
+  └── DigiKoinToken.ts        # Ignition deployment module
 /hardhat.config.ts            # Hardhat configuration
 ```
 

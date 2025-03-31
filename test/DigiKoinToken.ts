@@ -5,13 +5,17 @@ import { formatEther, getAddress, parseEther } from "viem";
 
 describe("DigiKoin Ecosystem Test", function () {
   const TOTAL_SUPPLY = parseEther("10000");  // 10kg = 10,000 grams
+  const DEFAULT_ETH_PRICE = 200000000000n; // $2,000 with 8 decimals
+  const DEFAULT_XAU_PRICE = 300000000000n; // $3,000 with 8 decimals
 
   async function deployDigiKoinFixture() {
     const [owner, alice, bob] = await hre.viem.getWalletClients();
 
     const digiKoin = await hre.viem.deployContract("DigiKoinToken");
+    const zeroAdddress = "0x0000000000000000000000000000000000000000";  // For only local test purpose
+    const priceFeed = await hre.viem.deployContract("PriceFeed", [zeroAdddress, zeroAdddress]);
     const dividendManager = await hre.viem.deployContract("DividendManager", [digiKoin.address]);
-    const goldReserveManager = await hre.viem.deployContract("GoldReserveManager", [digiKoin.address]);
+    const goldReserveManager = await hre.viem.deployContract("GoldReserveManager", [digiKoin.address, priceFeed.address]);
 
     const publicClient = await hre.viem.getPublicClient();
 
@@ -19,6 +23,7 @@ describe("DigiKoin Ecosystem Test", function () {
       digiKoin,
       dividendManager,
       goldReserveManager,
+      priceFeed,
       owner,
       alice,
       bob,
@@ -45,8 +50,10 @@ describe("DigiKoin Ecosystem Test", function () {
       const { digiKoin, goldReserveManager, alice, bob } = await loadFixture(deployDigiKoinFixture);
       const goldAmount = parseEther("100"); // 100 grams
 
+      const ethAmount = await goldReserveManager.read.calculateEthForGold([goldAmount]);
       await goldReserveManager.write.holdGold([goldAmount], {
         account: alice.account,
+        value: ethAmount,
       });
 
       expect(await digiKoin.read.balanceOf([alice.account.address])).to.equal(goldAmount);
@@ -74,8 +81,10 @@ describe("DigiKoin Ecosystem Test", function () {
 
       // Alice holds 1 kg gold
       const goldAmount = parseEther("1000");
+      const ethAmount = await goldReserveManager.read.calculateEthForGold([goldAmount]);
       await goldReserveManager.write.holdGold([goldAmount], {
         account: alice.account,
+        value: ethAmount,
       });
 
       // Alice transfers DGK tokens to Bob, and voting power is automotically delegated to Bob 
@@ -117,6 +126,14 @@ describe("DigiKoin Ecosystem Test", function () {
 
       // Should receive ~0.0909 ETH (within 0.0001 ETH tolerance)
       expect(ethGainedNumber).to.be.closeTo(expectedDividend, 0.0001);
+    });
+  });
+
+  describe("Price Feed", function () {
+    it("Check default price", async function () {
+      const { priceFeed } = await loadFixture(deployDigiKoinFixture);
+      expect(await priceFeed.read.getEthPrice()).to.equal(DEFAULT_ETH_PRICE)
+      expect(await priceFeed.read.getXauPrice()).to.equal(DEFAULT_XAU_PRICE)
     });
   });
 });

@@ -16,6 +16,7 @@
   "description": "",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
+    "dotenv": "^16.4.7",
     "hardhat": "^2.22.19"
   },
   "dependencies": {
